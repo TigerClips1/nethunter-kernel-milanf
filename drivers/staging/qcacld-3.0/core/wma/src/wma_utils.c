@@ -4599,35 +4599,35 @@ QDF_STATUS wma_mon_mlme_vdev_stop_send(struct vdev_mlme_obj *vdev_mlme,
 }
 
 QDF_STATUS wma_mon_mlme_vdev_down_send(struct vdev_mlme_obj *vdev_mlme,
-									   uint16_t data_len, void *data)
+                                       uint16_t data_len, void *data)
 {
-	uint8_t vdev_id;
-	tp_wma_handle wma = cds_get_context(QDF_MODULE_ID_WMA);
-	QDF_STATUS status;
-	struct del_bss_resp *resp;   /* <-- add it here instead */
+        uint8_t vdev_id;
+        tp_wma_handle wma = cds_get_context(QDF_MODULE_ID_WMA);
+        QDF_STATUS status;
+        struct del_bss_resp *resp;      /* <-- add this line */
 
-	if (!wma) {
-		wma_err("wma handle is NULL");
-		return QDF_STATUS_E_INVAL;
-	}
-	vdev_id = wlan_vdev_get_id(vdev_mlme->vdev);
+        if (!wma) {
+                wma_err("wma handle is NULL");
+                return QDF_STATUS_E_INVAL;
+        }
+        vdev_id = wlan_vdev_get_id(vdev_mlme->vdev);
 
-	status = wma_send_vdev_down_to_fw(wma, vdev_id);
+        status = wma_send_vdev_down_to_fw(wma, vdev_id);
 
-	if (QDF_IS_STATUS_ERROR(status))
-		wma_err("Failed to send vdev down cmd: vdev %d", vdev_id);
+        if (QDF_IS_STATUS_ERROR(status))
+                wma_err("Failed to send vdev down cmd: vdev %d", vdev_id);
 
-	resp = qdf_mem_malloc(sizeof(*resp));
-	if (resp) {
-		resp->vdev_id = vdev_id;
-		resp->status = QDF_STATUS_SUCCESS;
-		wlan_vdev_mlme_sm_deliver_evt(vdev_mlme->vdev,
-									  WLAN_VDEV_SM_EV_DOWN_COMPLETE,
-								sizeof(*resp),
-									  resp);
-	}
+        resp = qdf_mem_malloc(sizeof(*resp));
+        if (resp) {
+                resp->vdev_id = vdev_id;
+                resp->status = QDF_STATUS_SUCCESS;
+                wlan_vdev_mlme_sm_deliver_evt(vdev_mlme->vdev,
+                                              WLAN_VDEV_SM_EV_DOWN_COMPLETE,
+                                              sizeof(*resp),
+                                              resp);
+        }
 
-	return status;
+        return status;
 }
 
 #ifdef FEATURE_WLM_STATS
