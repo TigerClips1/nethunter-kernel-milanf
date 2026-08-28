@@ -1606,27 +1606,29 @@ static int wma_ll_stats_evt_handler(void *handle, u_int8_t *event,
 		cca_stats++;
 	}
 
-	result += i * sizeof(struct sir_wifi_chan_cca_stats);
-	qdf_status = wma_fill_tx_stats(ll_stats, fixed_param, param_buf,
-                                &result, &result_size);
-	if (QDF_IS_STATUS_SUCCESS(qdf_status)) {
-        qdf_status = wma_fill_rx_stats(ll_stats, fixed_param, param_buf,
+	    result += i * sizeof(struct sir_wifi_chan_cca_stats);
+        qdf_status = wma_fill_tx_stats(ll_stats, fixed_param, param_buf,
                                         &result, &result_size);
         if (QDF_IS_STATUS_SUCCESS(qdf_status)) {
-                sme_msg.type = eWMI_SME_LL_STATS_IND;
-                ...
-                qdf_status = scheduler_post_message(QDF_MODULE_ID_WMA,
-												QDF_MODULE_ID_SME,
-									   QDF_MODULE_ID_SME,
-									   &sme_msg);
-		}
+                qdf_status = wma_fill_rx_stats(ll_stats, fixed_param, param_buf,
+                                                &result, &result_size);
+                if (QDF_IS_STATUS_SUCCESS(qdf_status)) {
+                        sme_msg.type = eWMI_SME_LL_STATS_IND;
+                        sme_msg.bodyptr = (void *)link_stats_results;
+                        sme_msg.bodyval = 0;
+                        qdf_status = scheduler_post_message(QDF_MODULE_ID_WMA,
+                                                             QDF_MODULE_ID_SME,
+                                                             QDF_MODULE_ID_SME,
+                                                             &sme_msg);
+                }
+        }
 
-		if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
-			qdf_mem_free(link_stats_results);
-			return -EINVAL;
-		}
+        if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
+                qdf_mem_free(link_stats_results);
+                return -EINVAL;
+        }
 
-		return 0;
+        return 0;
 }
 
 /**
