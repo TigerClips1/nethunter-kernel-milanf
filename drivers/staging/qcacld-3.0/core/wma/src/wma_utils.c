@@ -617,20 +617,24 @@ void wma_lost_link_info_handler(tp_wma_handle wma, uint32_t vdev_id,
 	if (!lost_link_info)
 		return;
 
-		lost_link_info->vdev_id = vdev_id;
-	lost_link_info->rssi = rssi;
-	sme_msg.type = eWNI_SME_LOST_LINK_INFO_IND;
-	sme_msg.bodyptr = lost_link_info;
-	sme_msg.bodyval = 0;
-	qdf_status = scheduler_post_message(QDF_MODULE_ID_WMA,
+	lost_link_info = qdf_mem_malloc(sizeof(*lost_link_info));
+		if (!lost_link_info)
+        return;
+
+		lost_link_info->vdev_id = vdev_id;   // <-- extra indent, looks like part of the if
+		lost_link_info->rssi = rssi;
+		sme_msg.type = eWNI_SME_LOST_LINK_INFO_IND;
+		sme_msg.bodyptr = lost_link_info;
+		sme_msg.bodyval = 0;
+		qdf_status = scheduler_post_message(QDF_MODULE_ID_WMA,
+											QDF_MODULE_ID_SME,
 										QDF_MODULE_ID_SME,
-									 QDF_MODULE_ID_SME,
-									 &sme_msg);
-	if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
-		wma_err("fail to post msg to SME");
-		qdf_mem_free(lost_link_info);
-	}
+										&sme_msg);
+		if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
+			wma_err("fail to post msg to SME");
+			qdf_mem_free(lost_link_info);
 		}
+	}
 }
 
 /**
@@ -1604,15 +1608,14 @@ static int wma_ll_stats_evt_handler(void *handle, u_int8_t *event,
 
 	result += i * sizeof(struct sir_wifi_chan_cca_stats);
 	qdf_status = wma_fill_tx_stats(ll_stats, fixed_param, param_buf,
-								   &result, &result_size);
-	if (QDF_IS_STATUS_SUCCESS(qdf_status))
-		qdf_status = wma_fill_rx_stats(ll_stats, fixed_param, param_buf,
-									   &result, &result_size);
-		if (QDF_IS_STATUS_SUCCESS(qdf_status)) {
-			sme_msg.type = eWMI_SME_LL_STATS_IND;
-			sme_msg.bodyptr = (void *)link_stats_results;
-			sme_msg.bodyval = 0;
-			qdf_status = scheduler_post_message(QDF_MODULE_ID_WMA,
+                                &result, &result_size);
+	if (QDF_IS_STATUS_SUCCESS(qdf_status)) {
+        qdf_status = wma_fill_rx_stats(ll_stats, fixed_param, param_buf,
+                                        &result, &result_size);
+        if (QDF_IS_STATUS_SUCCESS(qdf_status)) {
+                sme_msg.type = eWMI_SME_LL_STATS_IND;
+                ...
+                qdf_status = scheduler_post_message(QDF_MODULE_ID_WMA,
 												QDF_MODULE_ID_SME,
 									   QDF_MODULE_ID_SME,
 									   &sme_msg);
@@ -2559,14 +2562,14 @@ wma_send_ll_stats_get_cmd(tp_wma_handle wma_handle,
 						  struct ll_stats_get_params *cmd)
 {
 	if (!(cfg_get(wma_handle->psoc, CFG_CLUB_LL_STA_AND_GET_STATION) &&
-		wmi_service_enabled(wma_handle->wmi_handle,
-							wmi_service_get_station_in_ll_stats_req) &&
-							wma_handle->interfaces[cmd->vdev_id].type == WMI_VDEV_TYPE_STA))
-		return wmi_unified_process_ll_stats_get_cmd(
-			wma_handle->wmi_handle, cmd);
+      wmi_service_enabled(wma_handle->wmi_handle,
+                           wmi_service_get_station_in_ll_stats_req) &&
+      wma_handle->interfaces[cmd->vdev_id].type == WMI_VDEV_TYPE_STA))
+        return wmi_unified_process_ll_stats_get_cmd(
+                wma_handle->wmi_handle, cmd);
 
-		return wmi_process_unified_ll_stats_get_sta_cmd(wma_handle->wmi_handle,
-														cmd);
+	return wmi_process_unified_ll_stats_get_sta_cmd(wma_handle->wmi_handle,
+													cmd);
 }
 #else
 static QDF_STATUS
@@ -4580,7 +4583,7 @@ QDF_STATUS wma_mon_mlme_vdev_stop_send(struct vdev_mlme_obj *vdev_mlme,
 	if (QDF_IS_STATUS_ERROR(status))
 		wma_err("Failed to send vdev stop cmd: vdev %d", vdev_id);
 
-	   resp = qdf_mem_malloc(sizeof(*resp));
+	resp = qdf_mem_malloc(sizeof(*resp));
        if (resp) {
                resp->vdev_id = vdev_id;
                resp->status = QDF_STATUS_SUCCESS;   
@@ -4589,7 +4592,6 @@ QDF_STATUS wma_mon_mlme_vdev_stop_send(struct vdev_mlme_obj *vdev_mlme,
                                              sizeof(*resp),
                                              resp); 
        }
-
 
 	return status;
 }
